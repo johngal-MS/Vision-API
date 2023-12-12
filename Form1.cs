@@ -12,6 +12,15 @@ using System.Collections.Generic;
 using System.Data;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Security.Policy;
+using System;
+
+using Microsoft.Azure.CognitiveServices.Vision.Face;
+using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
+using System.Xml;
+using System.Security.AccessControl;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
+
+
 
 namespace Vision_API
 {
@@ -46,6 +55,7 @@ namespace Vision_API
             var pg = await CreatePersonGroupAsync(EndPoint, APIKey);
             lblPersonGroup.Text = pg;
             gbl.PersonGroupID = pg;
+            textBox1.Text = pg;
             PopulateBlobs(listBox1);
         }
         public static void PopulateBlobs(ListBox cnt)
@@ -89,10 +99,10 @@ namespace Vision_API
         {
             DataItem f = (DataItem)lstPeople.SelectedItem;
 
-
+            lblStatus.Text = "Adding Face";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
-            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/" + f.Id + "/persistedfaces?url=";
+            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/" + f.Id + "/persistedfaces?+&detectionModel=detection_03";
 
 
             face content = new face();
@@ -104,11 +114,20 @@ namespace Vision_API
 
 
             var result = client.PostAsync(uri, content1).Result;
+            
+            TrainModel(gbl.PersonGroupID);
+            lblStatus.Text = "Face Added and Trrained.";
+        }
+        public void TrainModel(string PersonGroup)
+        {
+            var EndPoint = Configuration["CognitiveServicesEndpoint"];
+            var APIKey = Configuration["CognitiveServiceKey"];
+            using var client = new HttpClient();
+            string uri = "https://johngal-aiservices-01.cognitiveservices.azure.com/face/v1.0/persongroups/" + PersonGroup + "/train";
+            StringContent content = new StringContent("", Encoding.UTF8, "application/json");
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            if (result.StatusCode == HttpStatusCode.OK)
-            {
-                MessageBox.Show(f.Name + " Sucessfully trained.");
-            }
+            var result = client.PostAsync(uri, content).Result;
 
         }
         public async void AddPerson(string pg, string s_person)
@@ -176,12 +195,15 @@ namespace Vision_API
             pictureBox1.ImageLocation = gbl.imagepath + listBox1.SelectedItem;
         }
 
-        private void cmdAnalyze_Click(object sender, EventArgs e)
-        {
-            AnalyzeImage();
-        }
+        
 
-        public void AnalyzeImage()
+        private void button1_Click(object sender, EventArgs e)
+        {
+            lblStatus.Text="Analyzing Image...";
+            IdentifyPeople();
+            lblStatus.Text = "Ready";
+        }
+        public async void IdentifyPeople()
         {
             face pic = new face();
             pic.URL = gbl.imagepath + listBox1.SelectedItem;
@@ -192,36 +214,112 @@ namespace Vision_API
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
-            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons";
 
-            var result = client.GetStringAsync(uri).Result;
-            var KnownFaces = JsonConvert.DeserializeObject<List<Person>>(result);
+            string uri = gbl.Endpoint + "face/v1.0/detect" + "?returnFaceId=true&recognitionModel=recognition_03";
+            var content = new StringContent(JsonConvert.SerializeObject(pic), Encoding.UTF8, "application/json");
+            var result = client.PostAsync(uri, content).Result;
+            var id=result.Content.ReadAsStringAsync().Result;
 
-            //  face/v1.0/detect[?returnFaceId]
+            //resp_face[] id1 = new IdentifyPerson();
+            //resp_face id1 = JsonConvert.DeserializeObject<resp_face>(id);
 
-            using var client1 = new HttpClient();
-            client1.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
-            
-            
-            string uri1 = gbl.Endpoint + "face/v1.0/identify";
-            Detect_content content = new Detect_content();
-            content.PersonGroup = gbl.PersonGroupID;
-            Array.Resize(ref content.faceids,KnownFaces.Count);
-            int i=0;
-            foreach(var f in KnownFaces)
+            var id1 = JsonConvert.DeserializeObject<List<resp_face>>(id);
+
+
+            uri = gbl.Endpoint + "face/v1.0/identify";
+            //client.DefaultRequestHeaders.Add(content-Type)
+            Detect_content DetectContent = new Detect_content();
+            DetectContent.PersonGroupId = gbl.PersonGroupID;
+            //DetectContent.faceids.
+            DetectContent.maxNumOfCandidatesReturned = 1;
+            DetectContent.confidenceThreshold = .5;
+
+
+            int i = 0;
+           Array.Resize(ref DetectContent.faceids, id1.Count);
+            foreach (var item in id1)
             {
-
-                content.faceids[i] = f.personId;
+                DetectContent.faceids[i] = item.faceid;
                 i++;
-
             }
 
-            var content2 = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+            uri = gbl.Endpoint + "face/v1.0/identify";
+            using var client2 = new HttpClient();
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            var result1 = client1.PostAsync(uri1, content2).Result;
-           // var KnownFaces = JsonConvert.DeserializeObject<List<person_content>>(result);
+            string uri2 = gbl.Endpoint + "face/v1.0/identify";
+            var content2 = new StringContent(JsonConvert.SerializeObject(DetectContent), Encoding.UTF8, "application/json");
+            var result2 = client.PostAsync(uri2, content2).Result;
+            var id2 = result2.Content.ReadAsStringAsync().Result;
+            if (result2.IsSuccessStatusCode)
+            {
+                var x = JsonConvert.DeserializeObject<List<IdentifyPerson>>(id2);
+                int peoplefound = GetPeopleNames(x);
+                string message = x.Count().ToString() + " People found.\n" + peoplefound.ToString() + " of the " + x.Count().ToString() + " Identified\n";
+                int k = 0;
+                for (k = 0; k < x.Count; k++)
+                {
+                    try
+                    {
+                        message = message +  x[k].candidates[0].name +" identified with confidence "+ string.Format("{0:0.00}", x[k].candidates[0].confidence*100) + "%\n";
+                    }
+                    catch
+                    {
 
+                    }
+                }
+                MessageBox.Show(message);
+
+            }
+            else
+            {
+                MessageBox.Show(id2);
+            }
+            
+        }
+
+        private int GetPeopleNames(List<IdentifyPerson> People)
+        {
+            int i = 0;
+            int k = 0;
+            foreach(var person in People)
+            {
+                try
+                {
+                    person.candidates[0].name = GetNameFromPersonID(person.candidates[0].personid);
+                    i++;
+                }
+                catch(Exception ex)
+                {
+                    //person.candidates[i].name = "Unidentified";
+                }
+                
+                
+            }
+
+            return i;
 
         }
+        public string GetNameFromPersonID(string personid)
+        {
+            string ret="";
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
+            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/"+personid;
+            var result = client.GetStringAsync(uri).Result;
+            var person = JsonConvert.DeserializeObject<Person>(result);
+            if (person != null)
+            {
+                ret = person.name;
+                if (ret.Length == 0) ret = "Unknown";
+            }
+            return ret;
+
+        }
+
+
     }
 }
+
+

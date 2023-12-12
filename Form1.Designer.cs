@@ -38,7 +38,9 @@
             cmdAddPerson = new Button();
             lblPersonGroup = new Label();
             pictureBox1 = new PictureBox();
-            cmdAnalyze = new Button();
+            button1 = new Button();
+            textBox1 = new TextBox();
+            lblStatus = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -111,7 +113,7 @@
             // cmdAddPerson
             // 
             cmdAddPerson.Enabled = false;
-            cmdAddPerson.Location = new Point(24, 108);
+            cmdAddPerson.Location = new Point(29, 107);
             cmdAddPerson.Name = "cmdAddPerson";
             cmdAddPerson.Size = new Size(105, 21);
             cmdAddPerson.TabIndex = 9;
@@ -132,27 +134,45 @@
             // 
             pictureBox1.Location = new Point(407, 365);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(244, 189);
+            pictureBox1.Size = new Size(331, 229);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 11;
             pictureBox1.TabStop = false;
             // 
-            // cmdAnalyze
+            // button1
             // 
-            cmdAnalyze.Location = new Point(666, 362);
-            cmdAnalyze.Name = "cmdAnalyze";
-            cmdAnalyze.Size = new Size(74, 29);
-            cmdAnalyze.TabIndex = 12;
-            cmdAnalyze.Text = "Analyze";
-            cmdAnalyze.UseVisualStyleBackColor = true;
-            cmdAnalyze.Click += cmdAnalyze_Click;
+            button1.Location = new Point(754, 300);
+            button1.Name = "button1";
+            button1.Size = new Size(77, 43);
+            button1.TabIndex = 13;
+            button1.Text = "Analyze Image";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(157, 79);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(100, 23);
+            textBox1.TabIndex = 14;
+            // 
+            // lblStatus
+            // 
+            lblStatus.AutoSize = true;
+            lblStatus.Location = new Point(8, 567);
+            lblStatus.Name = "lblStatus";
+            lblStatus.Size = new Size(38, 15);
+            lblStatus.TabIndex = 15;
+            lblStatus.Text = "label3";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(862, 558);
-            Controls.Add(cmdAnalyze);
+            ClientSize = new Size(861, 597);
+            Controls.Add(lblStatus);
+            Controls.Add(textBox1);
+            Controls.Add(button1);
             Controls.Add(pictureBox1);
             Controls.Add(lblPersonGroup);
             Controls.Add(cmdAddPerson);
@@ -183,6 +203,8 @@
         private Button cmdAddPerson;
         private Label lblPersonGroup;
         private PictureBox pictureBox1;
-        private Button cmdAnalyze;
+        private Button button1;
+        private TextBox textBox1;
+        private Label lblStatus;
     }
 }
