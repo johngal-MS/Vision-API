@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace Vision_API
 {
-    internal class Globals
+    internal class PersistedFace
     {
-        public string Endpoint;
-        public string PersonGroupID;
-        public string imagepath;
-        public string APIKey;
         
+        
+        public string persistedFaceId;
+        public string PersonName;
     }
 }

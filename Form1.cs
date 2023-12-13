@@ -19,6 +19,9 @@ using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using System.Xml;
 using System.Security.AccessControl;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
+using System.Drawing.Drawing2D;
+using static System.Windows.Forms.DataFormats;
+using System.Windows.Forms;
 
 
 
@@ -29,7 +32,7 @@ namespace Vision_API
     {
         string PersonGrpID = "";
         Globals gbl = new Globals();
-
+        List<PersistedFace> faces = new List<PersistedFace>();
         public Form1()
         {
             InitializeComponent();
@@ -55,7 +58,6 @@ namespace Vision_API
             var pg = await CreatePersonGroupAsync(EndPoint, APIKey);
             lblPersonGroup.Text = pg;
             gbl.PersonGroupID = pg;
-            textBox1.Text = pg;
             PopulateBlobs(listBox1);
         }
         public static void PopulateBlobs(ListBox cnt)
@@ -111,12 +113,14 @@ namespace Vision_API
 
             // Create a string content with default UTF-8 encoding and text/plain media type
             var content1 = new StringContent(sbody, Encoding.UTF8, "application/json");
+            var result = client.PostAsync(uri, content1).Result;     
+            var pFace = result.Content.ReadAsStringAsync().Result;
 
-
-            var result = client.PostAsync(uri, content1).Result;
-            
+            var temp = JsonConvert.DeserializeObject<PersistedFace>(pFace);
+            temp.PersonName = lstPeople.Text;
+            faces.Add(temp);
             TrainModel(gbl.PersonGroupID);
-            lblStatus.Text = "Face Added and Trrained.";
+            lblStatus.Text = "Face Added and Trained.";
         }
         public void TrainModel(string PersonGroup)
         {
@@ -191,6 +195,7 @@ namespace Vision_API
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            txtAnalysis.Text = "";
             cmdAddFace.Enabled = (listBox1.SelectedIndex > -1 && lstPeople.SelectedIndex > -1);
             pictureBox1.ImageLocation = gbl.imagepath + listBox1.SelectedItem;
         }
@@ -255,27 +260,68 @@ namespace Vision_API
             {
                 var x = JsonConvert.DeserializeObject<List<IdentifyPerson>>(id2);
                 int peoplefound = GetPeopleNames(x);
-                string message = x.Count().ToString() + " People found.\n" + peoplefound.ToString() + " of the " + x.Count().ToString() + " Identified\n";
+                string message = x.Count().ToString() + " People found.\r\n" + peoplefound.ToString() + " of the " + x.Count().ToString() + " Identified\r\n";
                 int k = 0;
                 for (k = 0; k < x.Count; k++)
                 {
                     try
                     {
-                        message = message +  x[k].candidates[0].name +" identified with confidence "+ string.Format("{0:0.00}", x[k].candidates[0].confidence*100) + "%\n";
+                        message = message +  x[k].candidates[0].name +" identified with confidence "+ string.Format("{0:0.00}", x[k].candidates[0].confidence*100) + "%\r\n";
                     }
                     catch
                     {
 
                     }
                 }
-                MessageBox.Show(message);
-
+                MarkUpPicture(x, id1, pictureBox1);
+                txtAnalysis.Text = message;
             }
             else
             {
                 MessageBox.Show(id2);
             }
             
+        }
+        private void MarkUpPicture(List<IdentifyPerson> People, List<resp_face> rect, PictureBox pic)
+        {
+            string name = "";
+            int i = 0;
+            Image img = pic.Image;
+            Graphics g = Graphics.FromImage(img);
+            foreach (var r in rect)
+            {
+                Pen pen = new Pen(Color.White, 4);
+                pen.Alignment = PenAlignment.Inset;
+                Font myfont = new Font("Arial", 90);
+                try
+                {
+                    try
+                    {
+                        name = "";
+                        name = People[i].candidates[0].name; //FindPersonName(r.faceid,faces);
+                    }
+                    catch
+                    {
+
+                    }
+                    i++;
+                    Rectangle box = new Rectangle(r.faceRectangle.left, r.faceRectangle.top,  r.faceRectangle.width,  r.faceRectangle.height);
+                    g.DrawRectangle(pen, box);
+                    g.DrawString(name, myfont, Brushes.White, new Point(r.faceRectangle.left, r.faceRectangle.top-90));
+                }
+                catch (Exception ex)
+                {
+                    //person.candidates[i].name = "Unidentified";
+                }
+
+
+            }
+
+
+            
+            //g.DrawImage(img, new Point(0, 0));
+            img.Save("temp.Jpeg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            pic.ImageLocation = "temp.Jpeg";
         }
 
         private int GetPeopleNames(List<IdentifyPerson> People)
@@ -312,7 +358,7 @@ namespace Vision_API
             if (person != null)
             {
                 ret = person.name;
-                if (ret.Length == 0) ret = "Unknown";
+                if (ret.Length == 0) ret = "";
             }
             return ret;
 

@@ -9,9 +9,9 @@ namespace Vision_API
     internal class resp_face
     {
         public string faceid;
-        public rect rectangle;
+        public Rect faceRectangle = new Rect();
     }
-    public class rect
+    public class Rect
     {
         public int top;
         public int left;
