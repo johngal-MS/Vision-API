@@ -39,8 +39,8 @@
             lblPersonGroup = new Label();
             pictureBox1 = new PictureBox();
             button1 = new Button();
-            textBox1 = new TextBox();
             lblStatus = new Label();
+            txtAnalysis = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -56,7 +56,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(407, 51);
+            label1.Location = new Point(245, 29);
             label1.Name = "label1";
             label1.Size = new Size(45, 15);
             label1.TabIndex = 2;
@@ -66,7 +66,7 @@
             // 
             listBox1.FormattingEnabled = true;
             listBox1.ItemHeight = 15;
-            listBox1.Location = new Point(407, 69);
+            listBox1.Location = new Point(245, 47);
             listBox1.Name = "listBox1";
             listBox1.Size = new Size(331, 274);
             listBox1.TabIndex = 3;
@@ -132,29 +132,22 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(407, 365);
+            pictureBox1.Location = new Point(603, 47);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(331, 229);
+            pictureBox1.Size = new Size(454, 396);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 11;
             pictureBox1.TabStop = false;
             // 
             // button1
             // 
-            button1.Location = new Point(754, 300);
+            button1.Location = new Point(245, 327);
             button1.Name = "button1";
             button1.Size = new Size(77, 43);
             button1.TabIndex = 13;
             button1.Text = "Analyze Image";
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
-            // 
-            // textBox1
-            // 
-            textBox1.Location = new Point(157, 79);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(100, 23);
-            textBox1.TabIndex = 14;
             // 
             // lblStatus
             // 
@@ -165,13 +158,22 @@
             lblStatus.TabIndex = 15;
             lblStatus.Text = "label3";
             // 
+            // txtAnalysis
+            // 
+            txtAnalysis.Enabled = false;
+            txtAnalysis.Location = new Point(604, 459);
+            txtAnalysis.Multiline = true;
+            txtAnalysis.Name = "txtAnalysis";
+            txtAnalysis.Size = new Size(458, 110);
+            txtAnalysis.TabIndex = 16;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(861, 597);
+            ClientSize = new Size(1069, 597);
+            Controls.Add(txtAnalysis);
             Controls.Add(lblStatus);
-            Controls.Add(textBox1);
             Controls.Add(button1);
             Controls.Add(pictureBox1);
             Controls.Add(lblPersonGroup);
@@ -204,7 +206,7 @@
         private Label lblPersonGroup;
         private PictureBox pictureBox1;
         private Button button1;
-        private TextBox textBox1;
         private Label lblStatus;
+        private TextBox txtAnalysis;
     }
 }
