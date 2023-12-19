@@ -92,8 +92,8 @@ namespace Vision_API
         {
             string personGroupName = Name; // 
 
-            PersonGroup content = new PersonGroup();
-            content.personGroupId = Name;
+            pg_content content = new pg_content();
+            content.recognitionModel = gbl.RecognitionModel;
             content.name = Name;
             content.userData = Images;
             string sbody = JsonConvert.SerializeObject(content);
@@ -112,11 +112,23 @@ namespace Vision_API
         {
             cmdAddPerson.Enabled = (txtFace.TextLength > 0);
         }
-
+        private async void CreateFaceList(string faceid, string rec_model)
+        {
+            pg_content body=new pg_content();
+            body.name = faceid;
+            body.recognitionModel = rec_model;
+            body.userData = "";
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
+            string uri = gbl.Endpoint + "face/v1.0/facelists/" + faceid;
+            var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+            var result = await client.PutAsync(uri, content);
+        }
         private void cmdAddFace_Click(object sender, EventArgs e)
         {
             DataItem f = (DataItem)lstPeople.SelectedItem;
 
+            CreateFaceList(f.Id, gbl.RecognitionModel);
             lblStatus.Text = "Adding Face";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
@@ -236,7 +248,7 @@ namespace Vision_API
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            string uri = gbl.Endpoint + "face/v1.0/detect" + "?returnFaceId=true&recognitionModel=recognition_01";
+            string uri = gbl.Endpoint + "face/v1.0/detect" + "?returnFaceId=true&recognitionModel=" + gbl.RecognitionModel;
             var content = new StringContent(JsonConvert.SerializeObject(pic), Encoding.UTF8, "application/json");
             var result = client.PostAsync(uri, content).Result;
             var id = result.Content.ReadAsStringAsync().Result;
@@ -267,7 +279,7 @@ namespace Vision_API
             using var client2 = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            string uri2 = gbl.Endpoint + "face/v1.0/identify";
+            string uri2 = gbl.Endpoint + "face/v1.0/identify?"+"recognitionModel=recognition_03";
             var content2 = new StringContent(JsonConvert.SerializeObject(DetectContent), Encoding.UTF8, "application/json");
             var result2 = client.PostAsync(uri2, content2).Result;
             var id2 = result2.Content.ReadAsStringAsync().Result;
