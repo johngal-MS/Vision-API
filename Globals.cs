@@ -12,6 +12,8 @@ namespace Vision_API
         public string PersonGroupID;
         public string imagepath;
         public string APIKey;
+        public string PictureFolder;
+        public string RecognitionModel;
         
     }
 }
