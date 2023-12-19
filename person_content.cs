@@ -13,6 +13,5 @@ namespace Vision_API
         public string personid = "";
         public string name = "Person Group";
         public string userData = "User data";
-
     }
 }

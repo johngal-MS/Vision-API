@@ -22,8 +22,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using System.Drawing.Drawing2D;
 using static System.Windows.Forms.DataFormats;
 using System.Windows.Forms;
-
-
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Vision_API
 {
@@ -33,6 +32,7 @@ namespace Vision_API
         string PersonGrpID = "";
         Globals gbl = new Globals();
         List<PersistedFace> faces = new List<PersistedFace>();
+        List<PersonGroup> pglist = new List<PersonGroup>();
         public Form1()
         {
             InitializeComponent();
@@ -54,32 +54,48 @@ namespace Vision_API
             gbl.imagepath = ImageURL;
             gbl.Endpoint = EndPoint;
             gbl.APIKey = APIKey;
+            gbl.RecognitionModel = Configuration["RecognitionModel"];
 
-            var pg = await CreatePersonGroupAsync(EndPoint, APIKey);
-            lblPersonGroup.Text = pg;
-            gbl.PersonGroupID = pg;
-            PopulateBlobs(listBox1);
+            PopulatePersonGroups(lstPeronGroups);
+
+
         }
-        public static void PopulateBlobs(ListBox cnt)
+        public static void PopulateBlobs(string ImageFolder, ListBox cnt)
         {
+            cnt.Items.Clear();
             string connectionstring = "DefaultEndpointsProtocol=https;AccountName=johngalvision01;AccountKey=5lJe/2IZ1bQ8jMk5QxNwRHP6vFbgf2bhh/om9Ic3jCLy/21A9AitxZZQlo9CGgvvVznQlH4uinjl+AStwimtaQ==;EndpointSuffix=core.windows.net";
             // Create a BlobServiceClient object which will be used to create a container client
             BlobServiceClient blobServiceClient = new BlobServiceClient(connectionstring);
 
             // Get the container client object
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("pictures");
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(ImageFolder);
 
             // List all blobs in the container
             foreach (BlobItem blobItem in containerClient.GetBlobs())
             {
                 cnt.Items.Add(blobItem.Name);
-
             }
+
+
         }
-        public static async Task<string> CreatePersonGroupAsync(string endpoint, string apikey)
+        public async void DeletePersonGroup(string PersonGroupId, string endpoint, string apikey)
         {
-            string personGroupId = Guid.NewGuid().ToString();
-            pg_content content = new pg_content();
+            string personGroupName = Name; // 
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apikey);
+
+            var result = await client.DeleteAsync(endpoint + "face/v1.0/persongroups/" + PersonGroupId);
+            await PopulatePersonGroups(lstPeronGroups);
+
+        }
+        public async void CreatePersonGroup(string Name, string endpoint, string apikey, string Images)
+        {
+            string personGroupName = Name; // 
+
+            PersonGroup content = new PersonGroup();
+            content.personGroupId = Name;
+            content.name = Name;
+            content.userData = Images;
             string sbody = JsonConvert.SerializeObject(content);
 
             // Create a string content with default UTF-8 encoding and text/plain media type
@@ -88,8 +104,8 @@ namespace Vision_API
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apikey);
 
-            var result = await client.PutAsync(endpoint + "face/v1.0/persongroups/" + personGroupId, content1);
-            return personGroupId;
+            var result = await client.PutAsync(endpoint + "face/v1.0/persongroups/" + personGroupName, content1);
+
         }
 
         private void txtFace_TextChanged(object sender, EventArgs e)
@@ -104,16 +120,16 @@ namespace Vision_API
             lblStatus.Text = "Adding Face";
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
-            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/" + f.Id + "/persistedfaces?+&detectionModel=detection_03";
+            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/" + f.Id + "/persistedfaces?+&detectionModel=detection_01";
 
 
             face content = new face();
-            content.URL = gbl.imagepath + listBox1.SelectedItem;
+            content.URL = gbl.imagepath + gbl.PictureFolder + "/" + listBox1.SelectedItem;
             string sbody = JsonConvert.SerializeObject(content);
 
             // Create a string content with default UTF-8 encoding and text/plain media type
             var content1 = new StringContent(sbody, Encoding.UTF8, "application/json");
-            var result = client.PostAsync(uri, content1).Result;     
+            var result = client.PostAsync(uri, content1).Result;
             var pFace = result.Content.ReadAsStringAsync().Result;
 
             var temp = JsonConvert.DeserializeObject<PersistedFace>(pFace);
@@ -197,21 +213,21 @@ namespace Vision_API
         {
             txtAnalysis.Text = "";
             cmdAddFace.Enabled = (listBox1.SelectedIndex > -1 && lstPeople.SelectedIndex > -1);
-            pictureBox1.ImageLocation = gbl.imagepath + listBox1.SelectedItem;
+            pictureBox1.ImageLocation = gbl.imagepath + gbl.PictureFolder + "/" + listBox1.SelectedItem;
         }
 
-        
+
 
         private void button1_Click(object sender, EventArgs e)
         {
-            lblStatus.Text="Analyzing Image...";
+            lblStatus.Text = "Analyzing Image...";
             IdentifyPeople();
             lblStatus.Text = "Ready";
         }
         public async void IdentifyPeople()
         {
             face pic = new face();
-            pic.URL = gbl.imagepath + listBox1.SelectedItem;
+            pic.URL = gbl.imagepath + gbl.PictureFolder + "/" + listBox1.SelectedItem;
             string sbody = JsonConvert.SerializeObject(pic);
             // Create a string content with default UTF-8 encoding and text/plain media type
             var content1 = new StringContent(sbody, Encoding.UTF8, "application/json");
@@ -220,10 +236,10 @@ namespace Vision_API
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            string uri = gbl.Endpoint + "face/v1.0/detect" + "?returnFaceId=true&recognitionModel=recognition_03";
+            string uri = gbl.Endpoint + "face/v1.0/detect" + "?returnFaceId=true&recognitionModel=recognition_01";
             var content = new StringContent(JsonConvert.SerializeObject(pic), Encoding.UTF8, "application/json");
             var result = client.PostAsync(uri, content).Result;
-            var id=result.Content.ReadAsStringAsync().Result;
+            var id = result.Content.ReadAsStringAsync().Result;
 
             //resp_face[] id1 = new IdentifyPerson();
             //resp_face id1 = JsonConvert.DeserializeObject<resp_face>(id);
@@ -241,14 +257,13 @@ namespace Vision_API
 
 
             int i = 0;
-           Array.Resize(ref DetectContent.faceids, id1.Count);
+            Array.Resize(ref DetectContent.faceids, id1.Count);
             foreach (var item in id1)
             {
                 DetectContent.faceids[i] = item.faceid;
                 i++;
             }
 
-            uri = gbl.Endpoint + "face/v1.0/identify";
             using var client2 = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
@@ -266,7 +281,7 @@ namespace Vision_API
                 {
                     try
                     {
-                        message = message +  x[k].candidates[0].name +" identified with confidence "+ string.Format("{0:0.00}", x[k].candidates[0].confidence*100) + "%\r\n";
+                        message = message + x[k].candidates[0].name + " identified with confidence " + string.Format("{0:0.00}", x[k].candidates[0].confidence * 100) + "%\r\n";
                     }
                     catch
                     {
@@ -280,7 +295,7 @@ namespace Vision_API
             {
                 MessageBox.Show(id2);
             }
-            
+
         }
         private void MarkUpPicture(List<IdentifyPerson> People, List<resp_face> rect, PictureBox pic)
         {
@@ -292,22 +307,30 @@ namespace Vision_API
             {
                 Pen pen = new Pen(Color.White, 4);
                 pen.Alignment = PenAlignment.Inset;
-                Font myfont = new Font("Arial", 90);
+                Font myfont = new Font("Arial", g.VisibleClipBounds.Width / 30); // size the font to the image size
+                try { if (People[i].candidates[0].name != null) name = People[i].candidates[0].name; }
+                catch { name = ""; }
+
+                Rectangle box = new Rectangle(r.faceRectangle.left, r.faceRectangle.top, r.faceRectangle.width, r.faceRectangle.height);
+                g.DrawRectangle(pen, box);
+                g.DrawString(name, myfont, Brushes.White, new Point(r.faceRectangle.left, r.faceRectangle.top + r.faceRectangle.height));
+                i++;
+            }
+            img.Save("temp.Jpeg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            pic.ImageLocation = "temp.Jpeg";
+        }
+
+        private int GetPeopleNames(List<IdentifyPerson> People)
+        {
+            int i = 0;
+            int k = 0;
+            foreach (var person in People)
+            {
+
                 try
                 {
-                    try
-                    {
-                        name = "";
-                        name = People[i].candidates[0].name; //FindPersonName(r.faceid,faces);
-                    }
-                    catch
-                    {
-
-                    }
+                    person.candidates[0].name = GetNameFromPersonID(person.candidates[0].personid);
                     i++;
-                    Rectangle box = new Rectangle(r.faceRectangle.left, r.faceRectangle.top,  r.faceRectangle.width,  r.faceRectangle.height);
-                    g.DrawRectangle(pen, box);
-                    g.DrawString(name, myfont, Brushes.White, new Point(r.faceRectangle.left, r.faceRectangle.top-90));
                 }
                 catch (Exception ex)
                 {
@@ -317,42 +340,16 @@ namespace Vision_API
 
             }
 
-
-            
-            //g.DrawImage(img, new Point(0, 0));
-            img.Save("temp.Jpeg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            pic.ImageLocation = "temp.Jpeg";
-        }
-
-        private int GetPeopleNames(List<IdentifyPerson> People)
-        {
-            int i = 0;
-            int k = 0;
-            foreach(var person in People)
-            {
-                try
-                {
-                    person.candidates[0].name = GetNameFromPersonID(person.candidates[0].personid);
-                    i++;
-                }
-                catch(Exception ex)
-                {
-                    //person.candidates[i].name = "Unidentified";
-                }
-                
-                
-            }
-
             return i;
 
         }
         public string GetNameFromPersonID(string personid)
         {
-            string ret="";
+            string ret = "";
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
-            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/"+personid;
+            string uri = gbl.Endpoint + "face/v1.0/persongroups/" + gbl.PersonGroupID + "/persons/" + personid;
             var result = client.GetStringAsync(uri).Result;
             var person = JsonConvert.DeserializeObject<Person>(result);
             if (person != null)
@@ -365,6 +362,103 @@ namespace Vision_API
         }
 
 
+        private async Task<List<PersonGroup>> ListPersonGroup(string ApiKey, string Endpoint)
+        {
+            string[] ret = new string[5];
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ApiKey);
+            string uri = Endpoint + "face/v1.0/persongroups";
+            var result = await client.GetStringAsync(uri);
+            var pGroup = JsonConvert.DeserializeObject<List<PersonGroup>>(result);
+
+
+
+            return pGroup;
+
+        }
+        private void lstPeronGroups_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            lblPersonGroup.Text = "";
+            string userData = "";
+            string personid = "";
+            foreach (PersonGroup grp in pglist)
+            {
+                if (lstPeronGroups.SelectedItem == grp.name)
+                {
+                    personid = grp.personGroupId;
+                    lblPersonGroup.Text = personid;
+                    userData = grp.userData;
+                    gbl.PictureFolder = grp.userData;
+                    gbl.PersonGroupID = personid;
+                    break;
+                }
+            }
+            if (lblPersonGroup.Text.Length > 0)
+            {
+                lblPersonGroup.Text = personid;
+                PopulateBlobs(userData, listBox1);
+                PopulatePersons(personid, lstPeople);
+            }
+
+
+
+        }
+
+        private void txtPersonGroup_TextChanged(object sender, EventArgs e)
+        {
+            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0);
+        }
+
+        private async void cmdAddPersonGroup_Click(object sender, EventArgs e)
+        {
+            CreatePersonGroup(txtPersonGroup.Text, gbl.Endpoint, gbl.APIKey, txtImages.Text);
+            System.Threading.Thread.Sleep(1000);
+            pglist = await ListPersonGroup(gbl.APIKey, gbl.Endpoint);
+            lstPeronGroups.Items.Clear();
+            //lstPeronGroups.DataSource = pglist;
+            foreach (PersonGroup pg in pglist)
+            {
+                lstPeronGroups.Items.Add(pg.name);
+            }
+
+        }
+        private async Task PopulatePersonGroups(ListBox cnt)
+        {
+            pglist = await ListPersonGroup(gbl.APIKey, gbl.Endpoint);
+            lstPeronGroups.Items.Clear();
+            //lstPeronGroups.DataSource = pglist;
+            foreach (PersonGroup pg in pglist)
+            {
+                lstPeronGroups.Items.Add(pg.name);
+            }
+            //return true;
+        }
+        private void txtImages_TextChanged(object sender, EventArgs e)
+        {
+            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0);
+        }
+
+        private void lstPeronGroups_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void lstPeronGroups_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue == 46)
+            {
+                int i = lstPeronGroups.SelectedIndex;
+                DeletePersonGroup(lblPersonGroup.Text, gbl.Endpoint, gbl.APIKey);
+
+
+
+            }
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
 
