@@ -11,5 +11,6 @@ namespace Vision_API
         public string personGroupId;
         public string name;
         public string userData;
+        public string recognitionModel;
     }
 }

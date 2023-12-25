@@ -47,13 +47,15 @@
             lstPeronGroups = new ListBox();
             txtImages = new TextBox();
             label4 = new Label();
+            comboBox1 = new ComboBox();
+            label5 = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
             // lblpg
             // 
             lblpg.AutoSize = true;
-            lblpg.Location = new Point(161, 37);
+            lblpg.Location = new Point(161, 9);
             lblpg.Name = "lblpg";
             lblpg.Size = new Size(74, 15);
             lblpg.TabIndex = 0;
@@ -174,7 +176,7 @@
             // 
             // txtPersonGroup
             // 
-            txtPersonGroup.Location = new Point(29, 67);
+            txtPersonGroup.Location = new Point(29, 27);
             txtPersonGroup.Name = "txtPersonGroup";
             txtPersonGroup.Size = new Size(122, 23);
             txtPersonGroup.TabIndex = 17;
@@ -214,7 +216,7 @@
             // 
             // txtImages
             // 
-            txtImages.Location = new Point(161, 66);
+            txtImages.Location = new Point(164, 27);
             txtImages.Name = "txtImages";
             txtImages.Size = new Size(71, 23);
             txtImages.TabIndex = 21;
@@ -223,18 +225,40 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(29, 33);
+            label4.Location = new Point(27, 9);
             label4.Name = "label4";
             label4.Size = new Size(111, 15);
             label4.TabIndex = 22;
             label4.Text = "PersonGroup Name";
             label4.Click += label4_Click;
             // 
+            // comboBox1
+            // 
+            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Items.AddRange(new object[] { "recognition_01", "recognition_02", "recognition_03", "recognition_04" });
+            comboBox1.Location = new Point(258, 27);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(119, 23);
+            comboBox1.TabIndex = 23;
+            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(257, 9);
+            label5.Name = "label5";
+            label5.Size = new Size(108, 15);
+            label5.TabIndex = 24;
+            label5.Text = "Recognition Model";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1382, 743);
+            Controls.Add(label5);
+            Controls.Add(comboBox1);
             Controls.Add(label4);
             Controls.Add(txtImages);
             Controls.Add(lstPeronGroups);
@@ -283,5 +307,7 @@
         private ListBox lstPeronGroups;
         private TextBox txtImages;
         private Label label4;
+        private ComboBox comboBox1;
+        private Label label5;
     }
 }

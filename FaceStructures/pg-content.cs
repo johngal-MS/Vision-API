@@ -10,6 +10,6 @@ namespace Vision_API
     {
         public string name = "Person Group";
         public string userData = "User data";
-        public string recognitionModel = "recognition_03";
+        public string recognitionModel = "";
     }
 }

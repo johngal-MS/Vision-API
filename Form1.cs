@@ -69,12 +69,19 @@ namespace Vision_API
 
             // Get the container client object
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(ImageFolder);
-
-            // List all blobs in the container
-            foreach (BlobItem blobItem in containerClient.GetBlobs())
+            try
             {
-                cnt.Items.Add(blobItem.Name);
+                // List all blobs in the container
+                foreach (BlobItem blobItem in containerClient.GetBlobs())
+                {
+                    cnt.Items.Add(blobItem.Name);
+                }
             }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Unable to access configured image container: " + blobServiceClient.Uri+ ImageFolder);
+            }
+
 
 
         }
@@ -114,7 +121,7 @@ namespace Vision_API
         }
         private async void CreateFaceList(string faceid, string rec_model)
         {
-            pg_content body=new pg_content();
+            pg_content body = new pg_content();
             body.name = faceid;
             body.recognitionModel = rec_model;
             body.userData = "";
@@ -279,7 +286,7 @@ namespace Vision_API
             using var client2 = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", gbl.APIKey);
 
-            string uri2 = gbl.Endpoint + "face/v1.0/identify?"+"recognitionModel=recognition_03";
+            string uri2 = gbl.Endpoint + "face/v1.0/identify?" + "recognitionModel=" + gbl.RecognitionModel;
             var content2 = new StringContent(JsonConvert.SerializeObject(DetectContent), Encoding.UTF8, "application/json");
             var result2 = client.PostAsync(uri2, content2).Result;
             var id2 = result2.Content.ReadAsStringAsync().Result;
@@ -379,7 +386,7 @@ namespace Vision_API
             string[] ret = new string[5];
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ApiKey);
-            string uri = Endpoint + "face/v1.0/persongroups";
+            string uri = Endpoint + "face/v1.0/persongroups?returnRecognitionModel=true";
             var result = await client.GetStringAsync(uri);
             var pGroup = JsonConvert.DeserializeObject<List<PersonGroup>>(result);
 
@@ -402,6 +409,9 @@ namespace Vision_API
                     userData = grp.userData;
                     gbl.PictureFolder = grp.userData;
                     gbl.PersonGroupID = personid;
+                    comboBox1.Text=grp.recognitionModel;
+                    txtPersonGroup.Text=grp.name;
+                    txtImages.Text = grp.userData;
                     break;
                 }
             }
@@ -418,7 +428,7 @@ namespace Vision_API
 
         private void txtPersonGroup_TextChanged(object sender, EventArgs e)
         {
-            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0);
+            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0 && comboBox1.SelectedIndex >= -1);
         }
 
         private async void cmdAddPersonGroup_Click(object sender, EventArgs e)
@@ -447,7 +457,7 @@ namespace Vision_API
         }
         private void txtImages_TextChanged(object sender, EventArgs e)
         {
-            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0);
+            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0 && comboBox1.SelectedIndex >= -1);
         }
 
         private void lstPeronGroups_KeyPress(object sender, KeyPressEventArgs e)
@@ -469,7 +479,12 @@ namespace Vision_API
 
         private void label4_Click(object sender, EventArgs e)
         {
+                    }
 
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            gbl.RecognitionModel = comboBox1.Text;
+            cmdAddPersonGroup.Enabled = (txtPersonGroup.Text.Length > 0 && txtImages.Text.Length > 0 && comboBox1.SelectedIndex >= -1);
         }
     }
 }
