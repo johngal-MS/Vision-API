@@ -187,7 +187,6 @@ namespace Vision_API
             client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", APIKey);
             string uri = EndPoint + "face/v1.0/persongroups/";
             uri = uri + pg + "/persons";
-            // + "/persons/";
             var result = await client.PostAsync(uri, content1);
 
             PopulatePersons(pg, lstPeople);
