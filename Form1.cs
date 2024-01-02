@@ -321,7 +321,7 @@ namespace Vision_API
             int i = 0;
             Image img = pic.Image;
             Graphics g = Graphics.FromImage(img);
-            foreach (var r in rect)
+            foreach (var r in rect) 
             {
                 Pen pen = new Pen(Color.White, 4);
                 pen.Alignment = PenAlignment.Inset;
