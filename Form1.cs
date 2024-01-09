@@ -14,8 +14,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Security.Policy;
 using System;
 
-using Microsoft.Azure.CognitiveServices.Vision.Face;
-using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
+
 using System.Xml;
 using System.Security.AccessControl;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
